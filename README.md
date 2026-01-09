@@ -8,9 +8,9 @@ This project consists of:
 - **Next.js API Backend**: Serverless functions deployed on Vercel that interact with CDP Server Wallets v2
 - **CLI Package** ([add-wallet](https://www.npmjs.com/package/add-wallet)): NPX-executable tool for wallet creation
 
-Users can run `npx @add-wallet` to create a wallet, export private keys to `.env`, and get a link to fund with USDC via Coinbase Pay. 
+Users can run `npx add-wallet` to create a wallet, export private keys to `.env`, and get a link to fund with USDC via Coinbase Pay.
 
-**Topup Feature**: If your funding link expires or you need to fund your wallet again, use `npx @add-wallet topup` to generate a new funding link for any wallet address.
+**Topup Feature**: If your funding link expires or you need to fund your wallet again, use `npx add-wallet topup` to generate a new funding link for any wallet address.
 
 ## Prerequisites
 
