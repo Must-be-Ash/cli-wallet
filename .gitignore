@@ -46,4 +46,4 @@ idea.md
 TECHNICAL_SPEC.md
 
 # packages
-/packages
+/packages/cli/node_modules
