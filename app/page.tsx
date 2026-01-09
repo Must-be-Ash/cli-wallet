@@ -9,7 +9,7 @@ import { useScreenSize } from "@/hooks/use-screen-size";
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
-  const command = "npx @add-wallet";
+  const command = "npx add-wallet";
   const screenSize = useScreenSize();
 
   const copyToClipboard = async () => {
@@ -41,10 +41,12 @@ export default function Home() {
         {/* Header */}
         <div className="space-y-4">
           <h1
-            className="font-jersey text-6xl md:text-8xl tracking-tight"
+            className="font-jersey text-6xl md:text-8xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
             style={{ color: "#fafafa" }}
+            onClick={copyToClipboard}
+            title="Click to copy"
           >
-            npx @add-wallet
+            npx add-wallet
           </h1>
           <p
             className="text-lg md:text-xl md:max-w-none mx-auto leading-relaxed md:whitespace-nowrap"

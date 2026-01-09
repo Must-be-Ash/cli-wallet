@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 /**
  * API base URL from environment or default to production
  */
-const API_URL = process.env.API_URL || "https://cli-wallet.vercel.app";
+const API_URL = process.env.API_URL || "https://add-wallet.vercel.app";
 
 /**
  * Response structure for EOA wallet creation

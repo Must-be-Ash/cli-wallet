@@ -1,7 +1,7 @@
 {
-  "name": "@add-wallet",
+  "name": "add-wallet",
   "version": "1.0.0",
-  "description": "CLI tool to create crypto wallets using Coinbase Developer Platform for x402 payments",
+  "description": "Instantly create a crypto wallet on Base with USDC onramp - powered by Coinbase Developer Platform",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
@@ -16,15 +16,35 @@
   "keywords": [
     "wallet",
     "crypto",
+    "cryptocurrency",
     "coinbase",
     "cdp",
+    "coinbase-developer-platform",
     "cli",
     "x402",
     "usdc",
-    "base"
+    "base",
+    "base-network",
+    "ethereum",
+    "evm",
+    "onramp",
+    "web3",
+    "blockchain",
+    "payment",
+    "eoa",
+    "smart-account"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "ash.nouruzi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Must-be-Ash/cli-wallet.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Must-be-Ash/cli-wallet/issues"
+  },
+  "homepage": "https://github.com/Must-be-Ash/cli-wallet#readme",
   "engines": {
     "node": ">=18.0.0"
   },

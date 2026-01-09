@@ -128,5 +128,4 @@ This project is designed to be deployed on Vercel:
 
 ## License
 
-ISC
-# cli-wallet
+MIT
