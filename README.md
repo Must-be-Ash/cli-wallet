@@ -6,7 +6,7 @@ A CLI tool that creates crypto wallets using Coinbase Developer Platform's Serve
 
 This project consists of:
 - **Next.js API Backend**: Serverless functions deployed on Vercel that interact with CDP Server Wallets v2
-- **CLI Package** (`@add-wallet`): NPX-executable tool for wallet creation
+- **CLI Package** ([add-wallet](https://www.npmjs.com/package/add-wallet)): NPX-executable tool for wallet creation
 
 Users can run `npx @add-wallet` to create a wallet, export private keys to `.env`, and get a link to fund with USDC via Coinbase Pay.
 
