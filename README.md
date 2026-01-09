@@ -8,7 +8,9 @@ This project consists of:
 - **Next.js API Backend**: Serverless functions deployed on Vercel that interact with CDP Server Wallets v2
 - **CLI Package** ([add-wallet](https://www.npmjs.com/package/add-wallet)): NPX-executable tool for wallet creation
 
-Users can run `npx @add-wallet` to create a wallet, export private keys to `.env`, and get a link to fund with USDC via Coinbase Pay.
+Users can run `npx @add-wallet` to create a wallet, export private keys to `.env`, and get a link to fund with USDC via Coinbase Pay. 
+
+**Topup Feature**: If your funding link expires or you need to fund your wallet again, use `npx @add-wallet topup` to generate a new funding link for any wallet address.
 
 ## Prerequisites
 
@@ -88,6 +90,7 @@ cli-wallet/
 
 - `POST /api/wallet/eoa` - Create EOA (Externally Owned Account)
 - `POST /api/wallet/smart-account` - Create Smart Account
+- `POST /api/onramp/session` - Generate funding link for wallet topup
 - `GET /api/health` - Health check
 
 ## Development
@@ -102,6 +105,25 @@ Run linter:
 
 ```bash
 npm run lint
+```
+
+### Testing CLI Locally
+
+To test the CLI package locally before publishing:
+
+```bash
+# Build the CLI package first
+cd packages/cli
+npm run build
+
+# Then run it from the project root
+node packages/cli/dist/index.js
+```
+
+Or use the topup command:
+
+```bash
+node packages/cli/dist/index.js topup
 ```
 
 ## Deployment

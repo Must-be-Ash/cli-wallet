@@ -1,6 +1,6 @@
 {
   "name": "add-wallet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Instantly create a crypto wallet on Base with USDC onramp - powered by Coinbase Developer Platform",
   "main": "dist/index.js",
   "type": "module",

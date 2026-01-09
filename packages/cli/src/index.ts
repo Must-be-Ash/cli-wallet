@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { createWallet } from "./commands/create-wallet.js";
+import { topupWallet } from "./commands/topup.js";
 
 const program = new Command();
 
@@ -10,7 +11,7 @@ const program = new Command();
 program
   .name("add-wallet")
   .description("Create a crypto wallet instantly using Coinbase Developer Platform")
-  .version("1.0.0");
+  .version("1.0.1");
 
 // Main command (default action)
 program
@@ -22,6 +23,20 @@ program
   .action(async () => {
     try {
       await createWallet();
+    } catch (error) {
+      console.error(chalk.red("\n✖ An error occurred:"));
+      console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+      process.exit(1);
+    }
+  });
+
+// Top-up command - generate new funding link
+program
+  .command("topup")
+  .description("Generate a new funding link for your wallet")
+  .action(async () => {
+    try {
+      await topupWallet();
     } catch (error) {
       console.error(chalk.red("\n✖ An error occurred:"));
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));

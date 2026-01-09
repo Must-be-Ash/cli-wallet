@@ -72,8 +72,26 @@ https://pay.coinbase.com/buy?sessionToken=...&defaultAsset=USDC&presetFiatAmount
 
 ### Basic Usage
 ```bash
+# Create a new wallet
 npx add-wallet
+
+# Generate a new funding link (if your previous link expired)
+npx add-wallet topup
 ```
+
+### Top Up Command
+
+If your onramp link expires (after 5 minutes) or you need to fund your wallet again later:
+
+```bash
+npx add-wallet topup
+```
+
+This command will:
+- Automatically find your wallet address from `.env` (if available)
+- Let you choose a preset amount ($5, $10, $25, $50, $100, or custom)
+- Generate a fresh onramp link valid for 5 minutes
+- Display the link in the same enhanced format
 
 ### Using in Your Application
 After creating a wallet, use it in your Node.js app:

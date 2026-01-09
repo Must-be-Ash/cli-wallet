@@ -42,6 +42,9 @@ export async function saveToEnvFile(
     envContent += `OWNER_PRIVATE_KEY=${wallet.ownerPrivateKey}\n`;
   }
 
+  // Add note about topup command
+  envContent += `\n# Run 'npx add-wallet topup' at any time to topup your wallet\n`;
+
   // Write to .env file
   try {
     await fs.writeFile(envPath, envContent, { mode: 0o600 }); // Read/write for owner only

@@ -1,4 +1,5 @@
 import { createOnrampSession } from "./api-client.js";
+import chalk from "chalk";
 
 /**
  * Generate Coinbase Pay onramp URL for funding a wallet with USDC
@@ -33,17 +34,47 @@ export async function displayOnrampInstructions(
 ): Promise<void> {
   const onrampURL = await generateOnrampURL(address, presetAmount);
 
-  console.log("\n💰 Fund Your Wallet:\n");
-  console.log("To add USDC to your wallet, use Coinbase Pay:\n");
-  console.log(onrampURL);
-  console.log(
-    "\nThis link will open Coinbase Pay where you can purchase USDC"
-  );
-  console.log("and send it directly to your new wallet address.\n");
+  // Create a visual box around the funding link
+  const boxWidth = 80;
+  const horizontalLine = "═".repeat(boxWidth);
 
-  if (presetAmount) {
-    console.log(
-      `💡 The link is pre-filled with $${presetAmount} for quick checkout.\n`
-    );
+  console.log("\n");
+  console.log(chalk.cyan("╔" + horizontalLine + "╗"));
+  console.log(chalk.cyan("║") + chalk.bold.white(" 🎉 YOUR WALLET IS READY! ".padEnd(boxWidth)) + chalk.cyan("║"));
+  console.log(chalk.cyan("╠" + horizontalLine + "╣"));
+  console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
+
+  // Show wallet address
+  console.log(chalk.cyan("║") + chalk.dim("Address: ") + chalk.blue(address.padEnd(boxWidth - 9)) + chalk.cyan("║"));
+  console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
+
+  // Instruction
+  console.log(chalk.cyan("║") + chalk.white("Top up your wallet with link below 👇".padEnd(boxWidth)) + chalk.cyan("║"));
+  console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
+
+  // Display the URL as a single line (don't wrap - keeps it clickable in terminal)
+  console.log(chalk.bold.green.underline(onrampURL));
+
+  console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
+
+  // Expiry warning and topup command in orange
+  console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Note: it expires in 5 minutes ⌛️".padEnd(boxWidth)) + chalk.cyan("║"));
+  console.log(chalk.cyan("║") + chalk.hex("#FFA500")("You can topup your wallet at any time by running 'npx add-wallet topup'".padEnd(boxWidth)) + chalk.cyan("║"));
+  console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
+  console.log(chalk.cyan("╚" + horizontalLine + "╝"));
+  console.log("\n");
+}
+
+/**
+ * Wrap text to fit within a specified width
+ */
+function wrapText(text: string, width: number): string[] {
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (let i = 0; i < text.length; i += width) {
+    lines.push(text.substring(i, i + width));
   }
+
+  return lines;
 }

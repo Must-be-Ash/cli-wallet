@@ -1,7 +1,7 @@
 /**
- * Display security warnings and require user acknowledgment
+ * Display security reminders (no user acknowledgment required)
  */
-export declare function displaySecurityWarnings(): Promise<void>;
+export declare function displaySecurityWarnings(): void;
 /**
  * Display final security reminders after wallet creation
  */
