@@ -133,7 +133,11 @@ This project is designed to be deployed on Vercel:
 1. Push your code to GitHub
 2. Import the project in [Vercel Dashboard](https://vercel.com/new)
 3. Add environment variables in Vercel project settings
-4. Deploy
+4. Set up Redis for rate limiting:
+   - Go to Storage tab in Vercel dashboard
+   - Click "Create Database" → Select Redis
+   - Connect to your project (auto-configures `REDIS_URL`)
+5. Deploy
 
 ## Security
 
@@ -141,6 +145,8 @@ This project is designed to be deployed on Vercel:
 - Never commit `.env` files
 - Rotate API keys if compromised
 - Use Vercel environment variables for production
+- **Rate limiting**: 20 wallets per IP per day to prevent abuse
+- See [SECURITY.md](SECURITY.md) for detailed security guidelines
 
 ## Learn More
 

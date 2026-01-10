@@ -21,21 +21,51 @@ Request validation is handled in `middleware.ts`:
 
 ### Rate Limiting
 
-**Important:** This API does not currently implement rate limiting at the application level.
+**✓ Implemented:** Rate limiting is active for all wallet creation endpoints.
 
-For production deployments, implement rate limiting using one of these approaches:
+**Limits:**
+- **20 wallets per IP address per 24 hours**
+- Applies to both EOA and Smart Account creation endpoints
+- Resets automatically after 24 hours
 
-1. **Vercel Edge Config** (Recommended for Vercel deployments)
-   - Use Vercel's built-in rate limiting
-   - Configure per-IP limits in Vercel dashboard
+**Implementation:**
+- Uses Redis (via Vercel Marketplace)
+- IP-based rate limiting via `X-Forwarded-For` header
+- Returns HTTP 429 (Too Many Requests) when limit exceeded
+- Includes helpful error messages with reset time
+- Fail-open design: allows requests if Redis is unavailable
 
-2. **Upstash Redis**
-   - Serverless Redis for rate limiting
-   - Works well with Vercel serverless functions
+**Rate Limit Headers:**
+When rate limit is exceeded, the API returns these headers:
+```
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 20
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1736478939000
+Retry-After: 3600
+```
 
-3. **API Gateway**
-   - Use Vercel's API Gateway or similar service
-   - Configure rate limits per endpoint
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Rate limit exceeded. You can create up to 20 wallets per day.",
+  "details": {
+    "limit": 20,
+    "window": "24 hours",
+    "resetIn": "5 hours and 30 minutes"
+  }
+}
+```
+
+**Setting Up Redis:**
+1. Go to your Vercel project dashboard → Storage tab
+2. Click "Create Database" → Select Redis from Marketplace
+3. Connect Redis to your project (automatically adds `REDIS_URL` environment variable)
+4. Redeploy your application
+5. See [Vercel Redis Documentation](https://vercel.com/docs/storage/vercel-redis)
+
+**Note:** Vercel KV has been sunset and replaced with Redis via Vercel Marketplace.
 
 ### API Key Authentication (Optional)
 
