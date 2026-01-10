@@ -121,15 +121,15 @@ export default function Home() {
         >
           <div className="flex items-center gap-2">
             <span style={{ color: "#22c55e" }}>✓</span>
-            <span>No account needed</span>
+            <span>Only you see your keys</span>
           </div>
           <div className="flex items-center gap-2">
             <span style={{ color: "#22c55e" }}>✓</span>
-            <span>Private key exported</span>
+            <span>You own the wallet</span>
           </div>
           <div className="flex items-center gap-2">
             <span style={{ color: "#22c55e" }}>✓</span>
-            <span>Base Mainnet ready</span>
+            <span>Takes 10 seconds to create</span>
           </div>
         </div>
 
