@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { createWallet } from "./commands/create-wallet.js";
-import { topupWallet } from "./commands/topup.js";
+import { topupWalletMainnet, topupWalletTestnet } from "./commands/topup.js";
 
 const program = new Command();
 
@@ -30,13 +30,25 @@ program
     }
   });
 
-// Top-up command - generate new funding link
+// Top-up command - supports both mainnet and testnet
 program
-  .command("topup")
-  .description("Generate a new funding link for your wallet")
-  .action(async () => {
+  .command("topup [network]")
+  .description(
+    "Fund your wallet\n" +
+    "  - topup          : Generate funding link for mainnet USDC\n" +
+    "  - topup testnet  : Get testnet USDC on Base Sepolia"
+  )
+  .action(async (network?: string) => {
     try {
-      await topupWallet();
+      if (network === "testnet") {
+        await topupWalletTestnet();
+      } else if (!network) {
+        await topupWalletMainnet();
+      } else {
+        console.error(chalk.red(`\n✖ Unknown network: ${network}`));
+        console.error(chalk.yellow("Valid options: 'topup' or 'topup testnet'\n"));
+        process.exit(1);
+      }
     } catch (error) {
       console.error(chalk.red("\n✖ An error occurred:"));
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));

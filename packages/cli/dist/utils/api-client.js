@@ -55,6 +55,23 @@ export async function createOnrampSession(request) {
     }
 }
 /**
+ * Request testnet USDC from the faucet
+ */
+export async function requestTestnetFaucet(request) {
+    try {
+        const response = await axios.post(`${API_URL}/api/faucet/testnet`, request, {
+            timeout: 30000, // 30 second timeout
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    }
+    catch (error) {
+        throw handleAPIError(error);
+    }
+}
+/**
  * Handle API errors and convert to user-friendly messages
  */
 function handleAPIError(error) {

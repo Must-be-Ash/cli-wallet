@@ -4,11 +4,12 @@ import ora from "ora";
 import fs from "fs-extra";
 import path from "path";
 import { displayOnrampInstructions } from "../utils/onramp.js";
+import { requestTestnetFaucet } from "../utils/api-client.js";
 
 /**
- * Generate a new onramp funding link for an existing wallet
+ * Generate a new onramp funding link for an existing wallet (mainnet)
  */
-export async function topupWallet(): Promise<void> {
+export async function topupWalletMainnet(): Promise<void> {
   console.log(chalk.bold.cyan("\n┌─────────────────────────────────────┐"));
   console.log(chalk.bold.cyan("│   💰 Top Up Your Wallet 💰          │"));
   console.log(chalk.bold.cyan("└─────────────────────────────────────┘\n"));
@@ -120,6 +121,116 @@ export async function topupWallet(): Promise<void> {
     await displayOnrampInstructions(address, amount);
   } catch (error) {
     spinner.fail(chalk.red("Failed to generate funding link"));
+    throw error;
+  }
+}
+
+/**
+ * Request testnet USDC from the faucet for an existing wallet
+ */
+export async function topupWalletTestnet(): Promise<void> {
+  console.log(chalk.bold.magenta("\n┌─────────────────────────────────────┐"));
+  console.log(chalk.bold.magenta("│   🚰 Testnet Faucet 🚰              │"));
+  console.log(chalk.bold.magenta("└─────────────────────────────────────┘\n"));
+
+  // Try to find wallet address from .env
+  const walletAddress = await findWalletAddress();
+
+  let address: string;
+
+  if (walletAddress) {
+    // Found address in .env - confirm with user
+    console.log(chalk.green(`✓ Found wallet address: ${walletAddress}\n`));
+
+    const { useFound } = await inquirer.prompt<{ useFound: boolean }>([
+      {
+        type: "confirm",
+        name: "useFound",
+        message: "Use this address?",
+        default: true,
+      },
+    ]);
+
+    if (useFound) {
+      address = walletAddress;
+    } else {
+      // User wants to use a different address
+      const { manualAddress } = await inquirer.prompt<{ manualAddress: string }>([
+        {
+          type: "input",
+          name: "manualAddress",
+          message: "Enter wallet address:",
+          validate: (input: string) => {
+            if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
+              return "Please enter a valid Ethereum address (0x...)";
+            }
+            return true;
+          },
+        },
+      ]);
+      address = manualAddress;
+    }
+  } else {
+    // No .env found - prompt for address
+    console.log(chalk.yellow("No .env file found in current directory.\n"));
+
+    const { manualAddress } = await inquirer.prompt<{ manualAddress: string }>([
+      {
+        type: "input",
+        name: "manualAddress",
+        message: "Enter wallet address to fund:",
+        validate: (input: string) => {
+          if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
+            return "Please enter a valid Ethereum address (0x...)";
+          }
+          return true;
+        },
+      },
+    ]);
+    address = manualAddress;
+  }
+
+  // Request testnet funds
+  const spinner = ora({
+    text: "Requesting testnet USDC from faucet...",
+    color: "magenta",
+  }).start();
+
+  try {
+    const response = await requestTestnetFaucet({ address });
+
+    spinner.succeed(chalk.green("Testnet funds received!\n"));
+
+    // Display transaction details
+    console.log(chalk.bold("Transaction Details:"));
+    console.log(chalk.dim("─".repeat(50)));
+    console.log(chalk.cyan(`Network:    ${response.network}`));
+    console.log(chalk.cyan(`Token:      ${response.token}`));
+    console.log(chalk.cyan(`Amount:     ${response.amount}`));
+    console.log(chalk.dim("─".repeat(50)));
+    console.log(chalk.cyan(`Transaction Hash:`));
+    console.log(chalk.white(`${response.transactionHash}`));
+    console.log(chalk.dim("─".repeat(50)));
+    console.log(chalk.cyan(`View on Block Explorer:`));
+    console.log(chalk.white.underline(`${response.explorerUrl}\n`));
+
+    // Display usage limits
+    console.log(chalk.dim("💡 Note: USDC faucet allows 10 claims per 24 hours"));
+    console.log(chalk.dim("   Each claim provides 1 testnet USDC on Base Sepolia\n"));
+  } catch (error) {
+    spinner.fail(chalk.red("Failed to request testnet funds"));
+
+    // Show more helpful error messages
+    if (error instanceof Error) {
+      if (error.message.includes("rate limit")) {
+        console.error(chalk.yellow("\n⚠ Rate limit exceeded!"));
+        console.error(chalk.dim("The faucet allows 10 claims per 24 hours."));
+        console.error(chalk.dim("Please try again later.\n"));
+      } else {
+        console.error(chalk.red(`\nError: ${error.message}\n`));
+      }
+    }
+
     throw error;
   }
 }

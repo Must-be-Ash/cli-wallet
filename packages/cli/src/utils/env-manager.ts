@@ -44,6 +44,8 @@ export async function saveToEnvFile(
 
   // Add note about topup command
   envContent += `\n# Run 'npx add-wallet topup' at any time to topup your wallet\n`;
+  // Add note about testnet command
+  envContent += `# Run 'npx add-wallet topup testnet' at any time to topup your wallet with testnet USDC on Base Sepolia\n`;
 
   // Write to .env file
   try {

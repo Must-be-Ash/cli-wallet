@@ -44,6 +44,23 @@ export interface OnrampSessionResponse {
     expiresIn?: string;
 }
 /**
+ * Request structure for testnet faucet
+ */
+export interface FaucetRequest {
+    address: string;
+}
+/**
+ * Response structure for testnet faucet
+ */
+export interface FaucetResponse {
+    success: boolean;
+    transactionHash: string;
+    network: string;
+    token: string;
+    amount: string;
+    explorerUrl: string;
+}
+/**
  * Create an EOA wallet
  */
 export declare function createEOAWallet(): Promise<EOAWalletResponse>;
@@ -55,4 +72,8 @@ export declare function createSmartAccountWallet(): Promise<SmartAccountResponse
  * Create an onramp session and get onramp URL
  */
 export declare function createOnrampSession(request: OnrampSessionRequest): Promise<OnrampSessionResponse>;
+/**
+ * Request testnet USDC from the faucet
+ */
+export declare function requestTestnetFaucet(request: FaucetRequest): Promise<FaucetResponse>;
 //# sourceMappingURL=api-client.d.ts.map

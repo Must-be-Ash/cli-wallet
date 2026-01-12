@@ -33,6 +33,8 @@ export async function saveToEnvFile(wallet) {
     }
     // Add note about topup command
     envContent += `\n# Run 'npx add-wallet topup' at any time to topup your wallet\n`;
+    // Add note about testnet command
+    envContent += `# Run 'npx add-wallet topup testnet' at any time to topup your wallet with testnet USDC on Base Sepolia\n`;
     // Write to .env file
     try {
         await fs.writeFile(envPath, envContent, { mode: 0o600 }); // Read/write for owner only

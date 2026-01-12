@@ -44,6 +44,7 @@ export async function displayOnrampInstructions(address, presetAmount) {
     // Expiry warning and topup command in orange
     console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Note: it expires in 5 minutes ⌛️".padEnd(boxWidth)) + chalk.cyan("║"));
     console.log(chalk.cyan("║") + chalk.hex("#FFA500")("You can topup your wallet at any time by running 'npx add-wallet topup'".padEnd(boxWidth)) + chalk.cyan("║"));
+    console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Get testnet USDC on Base Sepolia by running 'npx add-wallet topup testnet'".padEnd(boxWidth)) + chalk.cyan("║"));
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     console.log(chalk.cyan("╚" + horizontalLine + "╝"));
     console.log("\n");

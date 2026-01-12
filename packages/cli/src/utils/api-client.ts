@@ -56,6 +56,25 @@ export interface OnrampSessionResponse {
 }
 
 /**
+ * Request structure for testnet faucet
+ */
+export interface FaucetRequest {
+  address: string;
+}
+
+/**
+ * Response structure for testnet faucet
+ */
+export interface FaucetResponse {
+  success: boolean;
+  transactionHash: string;
+  network: string;
+  token: string;
+  amount: string;
+  explorerUrl: string;
+}
+
+/**
  * Create an EOA wallet
  */
 export async function createEOAWallet(): Promise<EOAWalletResponse> {
@@ -108,6 +127,30 @@ export async function createOnrampSession(
   try {
     const response = await axios.post<OnrampSessionResponse>(
       `${API_URL}/api/onramp/session`,
+      request,
+      {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw handleAPIError(error);
+  }
+}
+
+/**
+ * Request testnet USDC from the faucet
+ */
+export async function requestTestnetFaucet(
+  request: FaucetRequest
+): Promise<FaucetResponse> {
+  try {
+    const response = await axios.post<FaucetResponse>(
+      `${API_URL}/api/faucet/testnet`,
       request,
       {
         timeout: 30000, // 30 second timeout
