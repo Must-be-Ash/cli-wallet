@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { PixelTrail } from "@/components/ui/pixel-trail";
 import { TextShimmer } from "@/components/ui/text-shimmer";
@@ -8,15 +8,254 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { useScreenSize } from "@/hooks/use-screen-size";
 
 export default function Home() {
-  const [copied, setCopied] = useState(false);
-  const command = "npx add-wallet";
+  const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+  const commands = [
+    {
+      command: "npx add-wallet",
+      description: "Create a new wallet and get funding link",
+    },
+    {
+      command: "npx add-wallet topup",
+      description: "Generate funding link for existing wallet",
+    },
+    {
+      command: "npx add-wallet topup testnet",
+      description: "Generate testnet funding link",
+    },
+  ];
   const screenSize = useScreenSize();
+  const trailContainerRef = useRef<HTMLDivElement>(null);
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (command: string) => {
     await navigator.clipboard.writeText(command);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedCommand(command);
+    setTimeout(() => setCopiedCommand(null), 2000);
   };
+
+  // Simulate mouse movement for continuous visual effect - 12 independent trails
+  useEffect(() => {
+    const container = trailContainerRef.current;
+    if (!container) return;
+
+    const pixelSize = screenSize.lessThan("md") ? 24 : 32;
+    const animationFrameIds: number[] = [];
+
+    // Helper function to build pixel map
+    const buildPixelMap = (): Map<string, HTMLElement> => {
+      const pixelMap = new Map<string, HTMLElement>();
+      const allPixels = document.querySelectorAll('[id*="-pixel-"]');
+      
+      allPixels.forEach((pixel) => {
+        const id = pixel.id;
+        const match = id.match(/-pixel-(\d+)-(\d+)/);
+        if (match) {
+          const pixelX = parseInt(match[1]);
+          const pixelY = parseInt(match[2]);
+          pixelMap.set(`${pixelX}-${pixelY}`, pixel as HTMLElement);
+        }
+      });
+      
+      return pixelMap;
+    };
+
+    // Cache pixel elements and create lookup map for performance
+    const pixelTrailContainer = container.querySelector(
+      '[class*="absolute inset-0"]'
+    ) as HTMLDivElement;
+    
+    if (!pixelTrailContainer) return;
+
+    // Build initial pixel map
+    let pixelMap = buildPixelMap();
+    
+    // On mobile, pixels might not be ready yet, so rebuild map after a delay
+    let mapRebuildAttempts = 0;
+    const maxRebuildAttempts = 10;
+    const rebuildPixelMap = () => {
+      if (pixelMap.size === 0 && mapRebuildAttempts < maxRebuildAttempts) {
+        mapRebuildAttempts++;
+        pixelMap = buildPixelMap();
+        if (pixelMap.size === 0) {
+          setTimeout(rebuildPixelMap, 100);
+        }
+      }
+    };
+    
+    // Try rebuilding after initial render (especially important for mobile)
+    setTimeout(rebuildPixelMap, 300);
+
+    // Create animation function for a single trail
+    const createTrailAnimation = (startX: number, startY: number) => {
+      let currentX = startX;
+      let currentY = startY;
+      
+      // Velocity-based movement for smooth continuous motion
+      let velocityX = (Math.random() - 0.5) * 2;
+      let velocityY = (Math.random() - 0.5) * 2;
+      const speed = 1.5; // Base speed
+      
+      // For circular/scribble patterns
+      let angle = Math.random() * Math.PI * 2;
+      let angleVelocity = (Math.random() - 0.5) * 0.05;
+      let circleRadius = 0;
+      let circleCenterX = currentX;
+      let circleCenterY = currentY;
+      let circleProgress = 0;
+      let movementMode: 'scribble' | 'circle' = Math.random() > 0.3 ? 'scribble' : 'circle';
+      let modeChangeCounter = 0;
+
+      const animateMovement = () => {
+        modeChangeCounter++;
+        
+        // Change movement mode every 2-4 seconds (roughly)
+        if (modeChangeCounter > 120 && Math.random() > 0.98) {
+          movementMode = Math.random() > 0.3 ? 'scribble' : 'circle';
+          modeChangeCounter = 0;
+          
+          if (movementMode === 'circle') {
+            circleCenterX = currentX;
+            circleCenterY = currentY;
+            circleRadius = 50 + Math.random() * 100;
+            circleProgress = 0;
+            angleVelocity = (Math.random() - 0.5) * 0.08;
+          } else {
+            // Reset velocity for scribble
+            velocityX = (Math.random() - 0.5) * 2;
+            velocityY = (Math.random() - 0.5) * 2;
+          }
+        }
+
+        if (movementMode === 'circle') {
+          // Circular motion
+          circleProgress += 0.02;
+          angle += angleVelocity;
+          
+          currentX = circleCenterX + Math.cos(angle) * circleRadius;
+          currentY = circleCenterY + Math.sin(angle) * circleRadius;
+          
+          // Occasionally change circle parameters
+          if (Math.random() > 0.95) {
+            angleVelocity += (Math.random() - 0.5) * 0.02;
+            angleVelocity = Math.max(-0.1, Math.min(0.1, angleVelocity));
+          }
+        } else {
+          // Continuous scribble motion
+          // Add slight random variations to velocity for organic feel
+          velocityX += (Math.random() - 0.5) * 0.3;
+          velocityY += (Math.random() - 0.5) * 0.3;
+          
+          // Dampen velocity slightly for smoother motion
+          velocityX *= 0.98;
+          velocityY *= 0.98;
+          
+          // Keep velocity within reasonable bounds
+          const maxVel = 3;
+          velocityX = Math.max(-maxVel, Math.min(maxVel, velocityX));
+          velocityY = Math.max(-maxVel, Math.min(maxVel, velocityY));
+          
+          // Update position
+          currentX += velocityX * speed;
+          currentY += velocityY * speed;
+          
+          // Bounce off edges with slight randomness
+          if (currentX < 0 || currentX > window.innerWidth) {
+            velocityX *= -0.8;
+            velocityX += (Math.random() - 0.5) * 0.5;
+            currentX = Math.max(0, Math.min(window.innerWidth, currentX));
+          }
+          if (currentY < 0 || currentY > window.innerHeight) {
+            velocityY *= -0.8;
+            velocityY += (Math.random() - 0.5) * 0.5;
+            currentY = Math.max(0, Math.min(window.innerHeight, currentY));
+          }
+        }
+
+        // Find and animate pixel using cached lookup map
+        // Rebuild map if empty (for mobile delayed rendering)
+        if (pixelMap.size === 0) {
+          pixelMap = buildPixelMap();
+        }
+        
+        // Get fresh rect for mobile (dimensions might change)
+        const rect = pixelTrailContainer.getBoundingClientRect();
+        const x = Math.floor((currentX - rect.left) / pixelSize);
+        const y = Math.floor((currentY - rect.top) / pixelSize);
+        const pixelKey = `${x}-${y}`;
+        
+        const pixel = pixelMap.get(pixelKey);
+        if (pixel) {
+          const animatePixel = (pixel as any).__animatePixel;
+          if (animatePixel) {
+            animatePixel();
+          }
+        }
+
+        const frameId = requestAnimationFrame(animateMovement);
+        animationFrameIds.push(frameId);
+      };
+
+      // Start this trail's animation
+      const frameId = requestAnimationFrame(animateMovement);
+      animationFrameIds.push(frameId);
+    };
+
+    // Create 12 trails at different starting positions
+    createTrailAnimation(
+      window.innerWidth / 2,
+      window.innerHeight / 2
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.25,
+      window.innerHeight * 0.3
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.75,
+      window.innerHeight * 0.7
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.15,
+      window.innerHeight * 0.7
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.85,
+      window.innerHeight * 0.25
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.5,
+      window.innerHeight * 0.15
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.1,
+      window.innerHeight * 0.5
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.9,
+      window.innerHeight * 0.5
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.3,
+      window.innerHeight * 0.8
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.7,
+      window.innerHeight * 0.2
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.4,
+      window.innerHeight * 0.1
+    );
+    createTrailAnimation(
+      window.innerWidth * 0.6,
+      window.innerHeight * 0.9
+    );
+
+    // Cleanup
+    return () => {
+      animationFrameIds.forEach((id) => {
+        cancelAnimationFrame(id);
+      });
+    };
+  }, [screenSize]);
 
   return (
     <main
@@ -26,6 +265,7 @@ export default function Home() {
       {/* Gooey Effect Background */}
       <GooeyFilter id="gooey-filter-pixel-trail" strength={8} />
       <div
+        ref={trailContainerRef}
         className="absolute inset-0 z-0"
         style={{ filter: "url(#gooey-filter-pixel-trail)" }}
       >
@@ -33,7 +273,7 @@ export default function Home() {
           pixelSize={screenSize.lessThan("md") ? 24 : 32}
           fadeDuration={0}
           delay={800}
-          pixelClassName="bg-[#3a3a3a]"
+          pixelClassName={screenSize.lessThan("md") ? "bg-[#1a1a1a]" : "bg-[#141414]"}
         />
       </div>
 
@@ -43,7 +283,7 @@ export default function Home() {
           <h1
             className="font-jersey text-6xl md:text-8xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
             style={{ color: "#fafafa" }}
-            onClick={copyToClipboard}
+            onClick={() => copyToClipboard(commands[0].command)}
             title="Click to copy"
           >
             npx add-wallet
@@ -59,32 +299,50 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Command Box */}
+        {/* Terminal-style Command Section */}
         <div
-          className="rounded-lg p-1 inline-block mx-auto"
+          className="rounded-lg p-1 w-full md:max-w-lg mx-auto text-left"
           style={{ backgroundColor: "#1a1a1a" }}
         >
           <div
-            className="flex items-center gap-3 rounded-md px-6 py-4"
+            className="rounded-md p-6 space-y-4 text-left"
             style={{ backgroundColor: "#141414" }}
           >
+            {commands.map((cmd, index) => (
+              <div
+                key={index}
+                className="group cursor-pointer"
+                onClick={() => copyToClipboard(cmd.command)}
+              >
+                <div className="flex items-start text-left">
+                  <div className="flex-1 min-w-0 text-left">
             <code
-              className="text-lg md:text-xl font-mono tracking-wide"
+                      className="text-base md:text-lg font-mono tracking-wide block text-left"
               style={{ color: "#fafafa" }}
             >
-              {command}
+                      {cmd.command}
             </code>
+                    <p
+                      className="text-sm mt-1 text-left"
+                      style={{ color: "#666666" }}
+                    >
+                      {cmd.description}
+                    </p>
+                  </div>
             <button
-              onClick={copyToClipboard}
-              className="p-2 rounded-md transition-all duration-200 hover:scale-105 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(cmd.command);
+                    }}
+                    className="p-1.5 rounded transition-all duration-200 hover:scale-110 flex-shrink-0"
               style={{ backgroundColor: "#2a2a2a" }}
-              aria-label="Copy to clipboard"
+                    aria-label={`Copy ${cmd.command} to clipboard`}
             >
-              {copied ? (
+                    {copiedCommand === cmd.command ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                        width="16"
+                        height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#22c55e"
@@ -97,8 +355,8 @@ export default function Home() {
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                        width="16"
+                        height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#888888"
@@ -111,6 +369,15 @@ export default function Home() {
                 </svg>
               )}
             </button>
+                </div>
+                {index < commands.length - 1 && (
+                  <div
+                    className="mt-4 h-px"
+                    style={{ backgroundColor: "#2a2a2a" }}
+                  />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
