@@ -334,7 +334,7 @@ export default function Home() {
                       e.stopPropagation();
                       copyToClipboard(cmd.command);
                     }}
-                    className="p-1.5 rounded transition-all duration-200 hover:scale-110 flex-shrink-0"
+                    className="p-1.5 rounded transition-all duration-200 hover:scale-110 flex-shrink-0 cursor-pointer"
               style={{ backgroundColor: "#2a2a2a" }}
                     aria-label={`Copy ${cmd.command} to clipboard`}
             >
