@@ -12,59 +12,75 @@ export async function topupWalletMainnet() {
     console.log(chalk.bold.cyan("\n┌─────────────────────────────────────┐"));
     console.log(chalk.bold.cyan("│   💰 Top Up Your Wallet 💰          │"));
     console.log(chalk.bold.cyan("└─────────────────────────────────────┘\n"));
-    // Try to find wallet address from .env
-    const walletAddress = await findWalletAddress();
+    // Try to find wallet addresses from .env
+    const wallets = await findWalletAddresses();
     let address;
+    let blockchain = "base";
     let amount;
-    if (walletAddress) {
-        // Found address in .env - confirm with user
-        console.log(chalk.green(`✓ Found wallet address: ${walletAddress}\n`));
-        const { useFound } = await inquirer.prompt([
-            {
-                type: "confirm",
-                name: "useFound",
-                message: "Use this address?",
-                default: true,
-            },
-        ]);
-        if (useFound) {
-            address = walletAddress;
-        }
-        else {
-            // User wants to use a different address
-            const { manualAddress } = await inquirer.prompt([
+    if (wallets.length > 0) {
+        // Found wallets in .env
+        if (wallets.length === 1) {
+            // Only one wallet found - confirm with user
+            console.log(chalk.green(`✓ Found wallet: ${wallets[0].label}`));
+            console.log(chalk.dim(`  Address: ${wallets[0].address}\n`));
+            const { useFound } = await inquirer.prompt([
                 {
-                    type: "input",
-                    name: "manualAddress",
-                    message: "Enter wallet address:",
-                    validate: (input) => {
-                        if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
-                            return "Please enter a valid Ethereum address (0x...)";
-                        }
-                        return true;
-                    },
+                    type: "confirm",
+                    name: "useFound",
+                    message: "Use this address?",
+                    default: true,
                 },
             ]);
-            address = manualAddress;
+            if (useFound) {
+                address = wallets[0].address;
+                blockchain = wallets[0].type === "solana" ? "solana" : "base";
+            }
+            else {
+                // User wants to use a different address
+                const result = await promptForManualAddress();
+                address = result.address;
+                blockchain = result.blockchain;
+            }
+        }
+        else {
+            // Multiple wallets found - let user choose
+            console.log(chalk.green(`✓ Found ${wallets.length} wallets in .env:\n`));
+            const { selectedWallet } = await inquirer.prompt([
+                {
+                    type: "list",
+                    name: "selectedWallet",
+                    message: "Which wallet do you want to fund?",
+                    choices: [
+                        ...wallets.map((wallet, index) => ({
+                            name: `${wallet.label}: ${wallet.address}`,
+                            value: index.toString(),
+                        })),
+                        new inquirer.Separator(),
+                        {
+                            name: "Enter a different address",
+                            value: "manual",
+                        },
+                    ],
+                },
+            ]);
+            if (selectedWallet === "manual") {
+                const result = await promptForManualAddress();
+                address = result.address;
+                blockchain = result.blockchain;
+            }
+            else {
+                const wallet = wallets[parseInt(selectedWallet)];
+                address = wallet.address;
+                blockchain = wallet.type === "solana" ? "solana" : "base";
+            }
         }
     }
     else {
         // No .env found - prompt for address
         console.log(chalk.yellow("No .env file found in current directory.\n"));
-        const { manualAddress } = await inquirer.prompt([
-            {
-                type: "input",
-                name: "manualAddress",
-                message: "Enter wallet address to fund:",
-                validate: (input) => {
-                    if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
-                        return "Please enter a valid Ethereum address (0x...)";
-                    }
-                    return true;
-                },
-            },
-        ]);
-        address = manualAddress;
+        const result = await promptForManualAddress();
+        address = result.address;
+        blockchain = result.blockchain;
     }
     // Ask for amount
     const { presetAmount } = await inquirer.prompt([
@@ -110,12 +126,51 @@ export async function topupWalletMainnet() {
     }).start();
     try {
         spinner.succeed(chalk.green("Funding link ready!\n"));
-        await displayOnrampInstructions(address, amount);
+        await displayOnrampInstructions(address, amount, blockchain);
     }
     catch (error) {
         spinner.fail(chalk.red("Failed to generate funding link"));
         throw error;
     }
+}
+/**
+ * Prompt user to manually enter an address
+ */
+async function promptForManualAddress() {
+    // First ask which blockchain
+    const { blockchain } = await inquirer.prompt([
+        {
+            type: "list",
+            name: "blockchain",
+            message: "Which blockchain?",
+            choices: [
+                { name: "Base (EVM)", value: "base" },
+                { name: "Solana", value: "solana" },
+            ],
+        },
+    ]);
+    // Then ask for address with appropriate validation
+    const { manualAddress } = await inquirer.prompt([
+        {
+            type: "input",
+            name: "manualAddress",
+            message: `Enter ${blockchain === "solana" ? "Solana" : "EVM"} wallet address:`,
+            validate: (input) => {
+                if (blockchain === "solana") {
+                    if (!input.match(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/)) {
+                        return "Please enter a valid Solana address";
+                    }
+                }
+                else {
+                    if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
+                        return "Please enter a valid Ethereum address (0x...)";
+                    }
+                }
+                return true;
+            },
+        },
+    ]);
+    return { address: manualAddress, blockchain };
 }
 /**
  * Request testnet USDC from the faucet for an existing wallet
@@ -124,66 +179,83 @@ export async function topupWalletTestnet() {
     console.log(chalk.bold.magenta("\n┌─────────────────────────────────────┐"));
     console.log(chalk.bold.magenta("│   🚰 Testnet Faucet 🚰              │"));
     console.log(chalk.bold.magenta("└─────────────────────────────────────┘\n"));
-    // Try to find wallet address from .env
-    const walletAddress = await findWalletAddress();
+    // Try to find wallet addresses from .env
+    const wallets = await findWalletAddresses();
     let address;
-    if (walletAddress) {
-        // Found address in .env - confirm with user
-        console.log(chalk.green(`✓ Found wallet address: ${walletAddress}\n`));
-        const { useFound } = await inquirer.prompt([
-            {
-                type: "confirm",
-                name: "useFound",
-                message: "Use this address?",
-                default: true,
-            },
-        ]);
-        if (useFound) {
-            address = walletAddress;
-        }
-        else {
-            // User wants to use a different address
-            const { manualAddress } = await inquirer.prompt([
+    let blockchain = "evm";
+    if (wallets.length > 0) {
+        // Found wallets in .env
+        if (wallets.length === 1) {
+            // Only one wallet found - confirm with user
+            console.log(chalk.green(`✓ Found wallet: ${wallets[0].label}`));
+            console.log(chalk.dim(`  Address: ${wallets[0].address}\n`));
+            const { useFound } = await inquirer.prompt([
                 {
-                    type: "input",
-                    name: "manualAddress",
-                    message: "Enter wallet address:",
-                    validate: (input) => {
-                        if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
-                            return "Please enter a valid Ethereum address (0x...)";
-                        }
-                        return true;
-                    },
+                    type: "confirm",
+                    name: "useFound",
+                    message: "Use this address?",
+                    default: true,
                 },
             ]);
-            address = manualAddress;
+            if (useFound) {
+                address = wallets[0].address;
+                blockchain = wallets[0].type === "solana" ? "solana" : "evm";
+            }
+            else {
+                // User wants to use a different address
+                const result = await promptForManualAddress();
+                address = result.address;
+                blockchain = result.blockchain === "solana" ? "solana" : "evm";
+            }
+        }
+        else {
+            // Multiple wallets found - let user choose
+            console.log(chalk.green(`✓ Found ${wallets.length} wallets in .env:\n`));
+            const { selectedWallet } = await inquirer.prompt([
+                {
+                    type: "list",
+                    name: "selectedWallet",
+                    message: "Which wallet do you want to fund?",
+                    choices: [
+                        ...wallets.map((wallet, index) => ({
+                            name: `${wallet.label}: ${wallet.address}`,
+                            value: index.toString(),
+                        })),
+                        new inquirer.Separator(),
+                        {
+                            name: "Enter a different address",
+                            value: "manual",
+                        },
+                    ],
+                },
+            ]);
+            if (selectedWallet === "manual") {
+                const result = await promptForManualAddress();
+                address = result.address;
+                blockchain = result.blockchain === "solana" ? "solana" : "evm";
+            }
+            else {
+                const wallet = wallets[parseInt(selectedWallet)];
+                address = wallet.address;
+                blockchain = wallet.type === "solana" ? "solana" : "evm";
+            }
         }
     }
     else {
         // No .env found - prompt for address
         console.log(chalk.yellow("No .env file found in current directory.\n"));
-        const { manualAddress } = await inquirer.prompt([
-            {
-                type: "input",
-                name: "manualAddress",
-                message: "Enter wallet address to fund:",
-                validate: (input) => {
-                    if (!input.match(/^0x[a-fA-F0-9]{40}$/)) {
-                        return "Please enter a valid Ethereum address (0x...)";
-                    }
-                    return true;
-                },
-            },
-        ]);
-        address = manualAddress;
+        const result = await promptForManualAddress();
+        address = result.address;
+        blockchain = result.blockchain === "solana" ? "solana" : "evm";
     }
     // Request testnet funds
+    const networkName = blockchain === "solana" ? "Solana Devnet" : "Base Sepolia";
     const spinner = ora({
-        text: "Requesting testnet USDC from faucet...",
+        text: `Requesting testnet USDC from faucet (${networkName})...`,
         color: "magenta",
     }).start();
     try {
-        const response = await requestTestnetFaucet({ address });
+        const response = await requestTestnetFaucet({ address, blockchain });
         spinner.succeed(chalk.green("Testnet funds received!\n"));
         // Display transaction details
         console.log(chalk.bold("Transaction Details:"));
@@ -197,9 +269,14 @@ export async function topupWalletTestnet() {
         console.log(chalk.dim("─".repeat(50)));
         console.log(chalk.cyan(`View on Block Explorer:`));
         console.log(chalk.white.underline(`${response.explorerUrl}\n`));
-        // Display usage limits
+        // Display usage limits based on blockchain
         console.log(chalk.dim("💡 Note: USDC faucet allows 10 claims per 24 hours"));
-        console.log(chalk.dim("   Each claim provides 1 testnet USDC on Base Sepolia\n"));
+        if (blockchain === "solana") {
+            console.log(chalk.dim("   Each claim provides 1 testnet USDC on Solana Devnet\n"));
+        }
+        else {
+            console.log(chalk.dim("   Each claim provides 1 testnet USDC on Base Sepolia\n"));
+        }
     }
     catch (error) {
         spinner.fail(chalk.red("Failed to request testnet funds"));
@@ -218,28 +295,54 @@ export async function topupWalletTestnet() {
     }
 }
 /**
- * Find wallet address from .env file in current directory
+ * Find all wallet addresses from .env file in current directory
  */
-async function findWalletAddress() {
+async function findWalletAddresses() {
     try {
         const envPath = path.join(process.cwd(), ".env");
         if (!(await fs.pathExists(envPath))) {
-            return null;
+            return [];
         }
         const envContent = await fs.readFile(envPath, "utf-8");
-        // Look for WALLET_ADDRESS or SMART_ACCOUNT_ADDRESS
+        const wallets = [];
+        // Look for WALLET_ADDRESS (EOA)
         const walletAddressMatch = envContent.match(/WALLET_ADDRESS=(.+)/);
-        const smartAccountMatch = envContent.match(/SMART_ACCOUNT_ADDRESS=(.+)/);
         if (walletAddressMatch) {
-            return walletAddressMatch[1].trim();
+            wallets.push({
+                address: walletAddressMatch[1].trim(),
+                type: "evm",
+                label: "EVM Wallet (EOA)",
+            });
         }
+        // Look for SMART_ACCOUNT_ADDRESS
+        const smartAccountMatch = envContent.match(/SMART_ACCOUNT_ADDRESS=(.+)/);
         if (smartAccountMatch) {
-            return smartAccountMatch[1].trim();
+            wallets.push({
+                address: smartAccountMatch[1].trim(),
+                type: "evm",
+                label: "EVM Smart Account",
+            });
         }
-        return null;
+        // Look for SOLANA_ADDRESS
+        const solanaAddressMatch = envContent.match(/SOLANA_ADDRESS=(.+)/);
+        if (solanaAddressMatch) {
+            wallets.push({
+                address: solanaAddressMatch[1].trim(),
+                type: "solana",
+                label: "Solana Wallet",
+            });
+        }
+        return wallets;
     }
     catch (error) {
-        return null;
+        return [];
     }
+}
+/**
+ * Find wallet address from .env file in current directory (legacy function)
+ */
+async function findWalletAddress() {
+    const wallets = await findWalletAddresses();
+    return wallets.length > 0 ? wallets[0].address : null;
 }
 //# sourceMappingURL=topup.js.map

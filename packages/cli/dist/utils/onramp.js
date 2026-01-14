@@ -6,13 +6,15 @@ import chalk from "chalk";
  *
  * @param address - The wallet address to fund
  * @param presetAmount - Optional USD amount to preset (e.g., "100")
+ * @param blockchain - Blockchain network ("base" or "solana")
  * @returns Complete Coinbase Pay URL with session token
  */
-export async function generateOnrampURL(address, presetAmount) {
+export async function generateOnrampURL(address, presetAmount, blockchain) {
     // Call backend API to create onramp session
     const response = await createOnrampSession({
         address,
         presetAmount,
+        blockchain,
     });
     return response.onrampUrl;
 }
@@ -21,9 +23,13 @@ export async function generateOnrampURL(address, presetAmount) {
  *
  * @param address - The wallet address to fund
  * @param presetAmount - Optional USD amount to preset (e.g., "100")
+ * @param blockchain - Blockchain network ("base" or "solana")
  */
-export async function displayOnrampInstructions(address, presetAmount) {
-    const onrampURL = await generateOnrampURL(address, presetAmount);
+export async function displayOnrampInstructions(address, presetAmount, blockchain) {
+    const onrampURL = await generateOnrampURL(address, presetAmount, blockchain);
+    // Determine currency based on blockchain
+    const currency = blockchain === "solana" ? "SOL" : "USDC";
+    const networkName = blockchain === "solana" ? "Solana" : "Base";
     // Create a visual box around the funding link
     const boxWidth = 80;
     const horizontalLine = "═".repeat(boxWidth);
@@ -34,17 +40,23 @@ export async function displayOnrampInstructions(address, presetAmount) {
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     // Show wallet address
     console.log(chalk.cyan("║") + chalk.dim("Address: ") + chalk.blue(address.padEnd(boxWidth - 9)) + chalk.cyan("║"));
+    console.log(chalk.cyan("║") + chalk.dim(`Network: ${networkName}`.padEnd(boxWidth)) + chalk.cyan("║"));
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     // Instruction
-    console.log(chalk.cyan("║") + chalk.white("Top up your wallet with link below 👇".padEnd(boxWidth)) + chalk.cyan("║"));
+    console.log(chalk.cyan("║") + chalk.white(`Top up your wallet with ${currency} using link below 👇`.padEnd(boxWidth)) + chalk.cyan("║"));
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     // Display the URL as a single line (don't wrap - keeps it clickable in terminal)
     console.log(chalk.bold.green.underline(onrampURL));
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     // Expiry warning and topup command in orange
     console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Note: it expires in 5 minutes ⌛️".padEnd(boxWidth)) + chalk.cyan("║"));
-    console.log(chalk.cyan("║") + chalk.hex("#FFA500")("You can topup your wallet at any time by running 'npx add-wallet topup'".padEnd(boxWidth)) + chalk.cyan("║"));
-    console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Get testnet USDC on Base Sepolia by running 'npx add-wallet topup testnet'".padEnd(boxWidth)) + chalk.cyan("║"));
+    if (blockchain === "solana") {
+        console.log(chalk.cyan("║") + chalk.hex("#FFA500")("You can also get devnet SOL at https://faucet.solana.com".padEnd(boxWidth)) + chalk.cyan("║"));
+    }
+    else {
+        console.log(chalk.cyan("║") + chalk.hex("#FFA500")("You can topup your wallet at any time by running 'npx add-wallet topup'".padEnd(boxWidth)) + chalk.cyan("║"));
+        console.log(chalk.cyan("║") + chalk.hex("#FFA500")("Get testnet USDC on Base Sepolia by running 'npx add-wallet topup testnet'".padEnd(boxWidth)) + chalk.cyan("║"));
+    }
     console.log(chalk.cyan("║") + "                                                                                ".padEnd(boxWidth) + chalk.cyan("║"));
     console.log(chalk.cyan("╚" + horizontalLine + "╝"));
     console.log("\n");

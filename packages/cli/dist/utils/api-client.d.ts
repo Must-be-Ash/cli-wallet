@@ -21,6 +21,16 @@ export interface SmartAccountResponse {
     note?: string;
 }
 /**
+ * Response structure for Solana wallet creation
+ */
+export interface SolanaWalletResponse {
+    success: boolean;
+    accountType: "solana";
+    address: string;
+    privateKey: string;
+    network: string;
+}
+/**
  * Error response structure
  */
 export interface ErrorResponse {
@@ -34,6 +44,7 @@ export interface ErrorResponse {
 export interface OnrampSessionRequest {
     address: string;
     presetAmount?: string;
+    blockchain?: "base" | "solana";
 }
 /**
  * Response structure for onramp session creation
@@ -48,6 +59,7 @@ export interface OnrampSessionResponse {
  */
 export interface FaucetRequest {
     address: string;
+    blockchain?: "evm" | "solana";
 }
 /**
  * Response structure for testnet faucet
@@ -68,6 +80,10 @@ export declare function createEOAWallet(): Promise<EOAWalletResponse>;
  * Create a Smart Account wallet
  */
 export declare function createSmartAccountWallet(): Promise<SmartAccountResponse>;
+/**
+ * Create a Solana wallet
+ */
+export declare function createSolanaWallet(): Promise<SolanaWalletResponse>;
 /**
  * Create an onramp session and get onramp URL
  */

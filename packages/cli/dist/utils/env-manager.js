@@ -26,6 +26,10 @@ export async function saveToEnvFile(wallet) {
         envContent += `WALLET_ADDRESS=${wallet.address}\n`;
         envContent += `WALLET_PRIVATE_KEY=${wallet.privateKey}\n`;
     }
+    else if (wallet.accountType === "solana") {
+        envContent += `SOLANA_ADDRESS=${wallet.address}\n`;
+        envContent += `SOLANA_PRIVATE_KEY=${wallet.privateKey}\n`;
+    }
     else {
         envContent += `SMART_ACCOUNT_ADDRESS=${wallet.smartAccountAddress}\n`;
         envContent += `OWNER_ADDRESS=${wallet.ownerAddress}\n`;

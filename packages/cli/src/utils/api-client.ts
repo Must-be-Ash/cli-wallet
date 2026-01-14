@@ -30,6 +30,17 @@ export interface SmartAccountResponse {
 }
 
 /**
+ * Response structure for Solana wallet creation
+ */
+export interface SolanaWalletResponse {
+  success: boolean;
+  accountType: "solana";
+  address: string;
+  privateKey: string;
+  network: string;
+}
+
+/**
  * Error response structure
  */
 export interface ErrorResponse {
@@ -44,6 +55,7 @@ export interface ErrorResponse {
 export interface OnrampSessionRequest {
   address: string;
   presetAmount?: string;
+  blockchain?: "base" | "solana";
 }
 
 /**
@@ -60,6 +72,7 @@ export interface OnrampSessionResponse {
  */
 export interface FaucetRequest {
   address: string;
+  blockchain?: "evm" | "solana";
 }
 
 /**
@@ -103,6 +116,28 @@ export async function createSmartAccountWallet(): Promise<SmartAccountResponse> 
   try {
     const response = await axios.post<SmartAccountResponse>(
       `${API_URL}/api/wallet/smart-account`,
+      {},
+      {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw handleAPIError(error);
+  }
+}
+
+/**
+ * Create a Solana wallet
+ */
+export async function createSolanaWallet(): Promise<SolanaWalletResponse> {
+  try {
+    const response = await axios.post<SolanaWalletResponse>(
+      `${API_URL}/api/wallet/solana`,
       {},
       {
         timeout: 30000, // 30 second timeout

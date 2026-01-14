@@ -38,6 +38,23 @@ export async function createSmartAccountWallet() {
     }
 }
 /**
+ * Create a Solana wallet
+ */
+export async function createSolanaWallet() {
+    try {
+        const response = await axios.post(`${API_URL}/api/wallet/solana`, {}, {
+            timeout: 30000, // 30 second timeout
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    }
+    catch (error) {
+        throw handleAPIError(error);
+    }
+}
+/**
  * Create an onramp session and get onramp URL
  */
 export async function createOnrampSession(request) {

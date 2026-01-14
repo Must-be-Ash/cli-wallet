@@ -1,12 +1,12 @@
 import fs from "fs-extra";
 import path from "path";
-import { EOAWalletResponse, SmartAccountResponse } from "./api-client.js";
+import { EOAWalletResponse, SmartAccountResponse, SolanaWalletResponse } from "./api-client.js";
 
 /**
  * Save wallet credentials to .env file in the current directory
  */
 export async function saveToEnvFile(
-  wallet: EOAWalletResponse | SmartAccountResponse
+  wallet: EOAWalletResponse | SmartAccountResponse | SolanaWalletResponse
 ): Promise<string> {
   const envPath = path.join(process.cwd(), ".env");
   const timestamp = new Date().toISOString();
@@ -36,6 +36,9 @@ export async function saveToEnvFile(
   if (wallet.accountType === "eoa") {
     envContent += `WALLET_ADDRESS=${wallet.address}\n`;
     envContent += `WALLET_PRIVATE_KEY=${wallet.privateKey}\n`;
+  } else if (wallet.accountType === "solana") {
+    envContent += `SOLANA_ADDRESS=${wallet.address}\n`;
+    envContent += `SOLANA_PRIVATE_KEY=${wallet.privateKey}\n`;
   } else {
     envContent += `SMART_ACCOUNT_ADDRESS=${wallet.smartAccountAddress}\n`;
     envContent += `OWNER_ADDRESS=${wallet.ownerAddress}\n`;

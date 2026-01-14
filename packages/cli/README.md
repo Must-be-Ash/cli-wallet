@@ -263,9 +263,35 @@ npm run build
 ```
 
 4. Run locally
+
+**Using production API:**
 ```bash
 node dist/index.js
 ```
+
+**Using local development API (for testing new features before publishing):**
+
+1. **First, start the local Next.js server** (from project root):
+```bash
+npm run dev
+```
+
+2. **Then run CLI commands with local API** (from `packages/cli` directory):
+```bash
+# Create EVM wallet
+API_URL=http://localhost:3000 node dist/index.js
+
+# Create Solana wallet
+API_URL=http://localhost:3000 node dist/index.js sol
+
+# Generate mainnet funding link
+API_URL=http://localhost:3000 node dist/index.js topup
+
+# Generate testnet funding link
+API_URL=http://localhost:3000 node dist/index.js topup testnet
+```
+
+**Important:** The local dev server (`npm run dev`) must be running in a separate terminal for these commands to work. This allows you to test the CLI against your local API backend before publishing to npm.
 
 ### Building from Source
 
