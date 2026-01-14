@@ -15,6 +15,10 @@ export default function Home() {
       description: "Create a new wallet and get funding link",
     },
     {
+      command: "npx add-wallet sol",
+      description: "Create a Solana wallet",
+    },
+    {
       command: "npx add-wallet topup",
       description: "Generate funding link for existing wallet",
     },

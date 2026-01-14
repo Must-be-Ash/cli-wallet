@@ -109,22 +109,35 @@ npm run lint
 
 ### Testing CLI Locally
 
-To test the CLI package locally before publishing:
+To test the CLI package locally before publishing (for testing new features that aren't published yet):
 
+1. **Start the local development server** (in the project root):
 ```bash
-# Build the CLI package first
+npm run dev
+```
+
+2. **Build the CLI package** (in a new terminal):
+```bash
 cd packages/cli
 npm run build
-
-# Then run it from the project root
-node packages/cli/dist/index.js
 ```
 
-Or use the topup command:
-
+3. **Run the CLI with local API** (from project root):
 ```bash
-node packages/cli/dist/index.js topup
+# Create EVM wallet
+API_URL=http://localhost:3000 node packages/cli/dist/index.js
+
+# Create Solana wallet
+API_URL=http://localhost:3000 node packages/cli/dist/index.js sol
+
+# Generate mainnet funding link
+API_URL=http://localhost:3000 node packages/cli/dist/index.js topup
+
+# Generate testnet funding link
+API_URL=http://localhost:3000 node packages/cli/dist/index.js topup testnet
 ```
+
+**Note:** The local dev server (`npm run dev`) must be running for these commands to work.
 
 ## Deployment
 

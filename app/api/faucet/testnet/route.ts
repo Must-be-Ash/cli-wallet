@@ -6,6 +6,7 @@ import { getCdpClient } from "@/lib/cdp-client";
  */
 interface FaucetRequest {
   address: string;
+  blockchain?: "evm" | "solana";
 }
 
 /**
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: FaucetRequest = await request.json();
-    const { address } = body;
+    const { address, blockchain = "evm" } = body;
 
     // Validate required fields
     if (!address) {
@@ -35,40 +36,79 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate address format (basic EVM address validation)
-    if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid wallet address format",
-        },
-        { status: 400 }
-      );
+    // Validate address format based on blockchain
+    if (blockchain === "solana") {
+      // Basic Solana address validation
+      if (!address.match(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid Solana address format",
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      // EVM address validation
+      if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid EVM wallet address format",
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    console.log(`[FAUCET] Requesting testnet USDC for: ${address}`);
+    if (blockchain === "solana") {
+      console.log(`[FAUCET] Requesting testnet USDC for Solana: ${address}`);
 
-    // Request USDC from faucet on Base Sepolia
-    const faucetResponse = await cdp.evm.requestFaucet({
-      address: address,
-      network: "base-sepolia",
-      token: "usdc",
-    });
+      // Request USDC from faucet on Solana Devnet
+      const { signature } = await cdp.solana.requestFaucet({
+        address: address,
+        token: "usdc",
+      });
 
-    console.log(`[FAUCET] Transaction hash: ${faucetResponse.transactionHash}`);
+      console.log(`[FAUCET] Transaction signature: ${signature}`);
 
-    // Return success response
-    return NextResponse.json(
-      {
-        success: true,
-        transactionHash: faucetResponse.transactionHash,
+      // Return success response for Solana
+      return NextResponse.json(
+        {
+          success: true,
+          transactionHash: signature,
+          network: "solana-devnet",
+          token: "usdc",
+          amount: "1 USDC",
+          explorerUrl: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+        },
+        { status: 200 }
+      );
+    } else {
+      console.log(`[FAUCET] Requesting testnet USDC for EVM: ${address}`);
+
+      // Request USDC from faucet on Base Sepolia
+      const faucetResponse = await cdp.evm.requestFaucet({
+        address: address,
         network: "base-sepolia",
         token: "usdc",
-        amount: "1 USDC",
-        explorerUrl: `https://sepolia.basescan.org/tx/${faucetResponse.transactionHash}`,
-      },
-      { status: 200 }
-    );
+      });
+
+      console.log(`[FAUCET] Transaction hash: ${faucetResponse.transactionHash}`);
+
+      // Return success response for EVM
+      return NextResponse.json(
+        {
+          success: true,
+          transactionHash: faucetResponse.transactionHash,
+          network: "base-sepolia",
+          token: "usdc",
+          amount: "1 USDC",
+          explorerUrl: `https://sepolia.basescan.org/tx/${faucetResponse.transactionHash}`,
+        },
+        { status: 200 }
+      );
+    }
   } catch (error: unknown) {
     console.error("[FAUCET] Error requesting testnet funds:", error);
 

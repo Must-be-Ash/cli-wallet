@@ -9,6 +9,7 @@ import { getCdpClient } from "@/lib/cdp-client";
 interface OnrampSessionRequest {
   address: string;
   presetAmount?: string;
+  blockchain?: "base" | "solana";
 }
 
 /**
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: OnrampSessionRequest = await request.json();
-    const { address, presetAmount } = body;
+    const { address, presetAmount, blockchain = "base" } = body;
 
     // Validate required fields
     if (!address) {
@@ -39,15 +40,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate address format (basic EVM address validation)
-    if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid wallet address format",
-        },
-        { status: 400 }
-      );
+    // Validate address format based on blockchain
+    if (blockchain === "solana") {
+      // Basic Solana address validation (base58, typically 32-44 characters)
+      if (!address.match(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid Solana address format",
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      // EVM address validation
+      if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid EVM wallet address format",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Build onramp session parameters
@@ -59,8 +74,8 @@ export async function POST(request: NextRequest) {
       paymentCurrency?: string;
     } = {
       destinationAddress: address,
-      purchaseCurrency: "USDC",
-      destinationNetwork: "base",
+      purchaseCurrency: blockchain === "solana" ? "SOL" : "USDC",
+      destinationNetwork: blockchain,
     };
 
     // Add optional preset amount for one-click-buy experience
