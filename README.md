@@ -1,5 +1,7 @@
 # CLI Wallet - Add Wallet Tool
 
+> **Outdated, not maintained.** The CDP SDK and Next.js are out of date and need to be updated before use.
+
 A CLI tool that creates crypto wallets using Coinbase Developer Platform's Server Wallets v2 API. This tool allows developers to instantly create and fund wallets on Base Mainnet for x402 payments.
 
 ## Overview
